@@ -271,7 +271,7 @@ AIDGN-RUL is evaluated against multiple state-of-the-art RUL prediction methods,
       <td><b>5.51 ± 0.89</b></td><td>7.63 ± 1.03</td><td><b>7.05 ± 0.17</b></td><td><b>8.31 ± 0.02</b></td>
       <td><b>7.18 ± 0.47</b></td><td><b>5.70 ± 0.16</b></td><td><b>10.71 ± 0.46</b></td><td><b>7.44 ± 0.46</b></td>
     </tr>
-    <tr>
+    <tr class="score-row">
       <td>Score</td>
       <td><b>0.61 ± 0.37</b></td><td><u>1.03 ± 0.63</u></td><td><b>0.77 ± 0.02</b></td><td><b>0.98 ± 0.01</b></td>
       <td><u>0.81 ± 0.08</u></td><td><b>0.57 ± 0.03</b></td><td><b>1.18 ± 0.13</b></td><td><b>0.85 ± 0.18</b></td>
