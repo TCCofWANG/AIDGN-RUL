@@ -57,8 +57,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__)
     parser.add_argument('--task', default='normal', type=str, help='task options: [normal,PINN]')
-    parser.add_argument('--model_name', default='AGCNN', type=str,
-                        help='[LeNet, LSTM, Transformer, Autoformer, PatchTST, AGCNN, CDSG, SDAGCN, Dual_Mixer, Transformer_domain,FCSTGNN, AIGCN]')
+    parser.add_argument('--model_name', default='AIDGN', type=str,
+                        help='[LeNet, LSTM, Transformer, Autoformer, PatchTST, AGCNN, CDSG, SDAGCN, Dual_Mixer, Transformer_domain,FCSTGNN, AIDGN]')
 
     parser.add_argument('--info', default='main test', type=str, help='extra information')
     parser.add_argument('--train', default=False, type=str2bool, help='Train or test')
@@ -203,8 +203,8 @@ if __name__ == '__main__':
             exp = Exp_DA(args)
             exp.train(save_path)
         else:
-            args.Data_id_CMAPSS = 'FD001'
-            model_names = ['LeNet', 'LSTM', 'Transformer', 'Autoformer', 'PatchTST', 'AGCNN', 'Dual_Mixer', 'Transformer_domain','FCSTGNN', 'CDSG', 'SDAGCN', 'AIGCN']
+            args.Data_id_CMAPSS = 'FD003'
+            model_names = ['AIDGN', 'LeNet', 'LSTM', 'Transformer', 'Autoformer', 'PatchTST', 'AGCNN', 'Dual_Mixer', 'Transformer_domain','FCSTGNN', 'CDSG', 'SDAGCN']
             for model_name in model_names :
                 print('------------ {} test performance using dataset {}------------'.format(model_name, str(args.Data_id_CMAPSS) ))
                 args.model_name = model_name
@@ -218,8 +218,8 @@ if __name__ == '__main__':
                 try:
                     exp = Exp ( args )
                     exp.start ( )
-                except Exception as e:
-                    print(e)
+                except:
+                    print(model_name+" model's trained weights not found or corrupted!")
     elif args.task == 'PINN':
         args.learning_rate = 0.001
         exp = Exp_PINN(args)

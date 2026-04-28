@@ -147,7 +147,7 @@ class Exp_DA(object):
             self.args.fc_layer_dim = self.args.hidden_dim * 4
             self.args.kernal_size = self.args.AATE_dim
             self.args.num_sensor = self.input_feature
-            model = AIGCN ( self.args )
+            model = AIDGN ( self.args )
 
 
         print("Parameter :", np.sum([para.numel() for para in model.parameters()]))

@@ -1,8 +1,7 @@
 import random
 import sys
 
-from Model.CDSG import CDSG
-from Model.SDAGCN import SDAGCN
+from torch.utils.data import DataLoader
 
 sys.path.append ( ".." )
 import os
@@ -18,7 +17,7 @@ import yaml
 from N_CMAPSS_Related.N_CMAPSS_load_data import get_n_cmapss_data_, N_CMAPSSData
 from CMAPSS_Related.load_data_CMAPSS import get_cmapss_data_
 from CMAPSS_Related.CMAPSS_Dataset import CMAPSSData
-from torch.utils.data import DataLoader
+
 
 from Model import *
 
@@ -93,8 +92,7 @@ class Exp ( object ) :
             self.args.decay = 0.7
 
             self.args.time_denpen_len = 10
-            self.args.lstmout_dim = 10
-
+            self.args.lstmout_dim = 32
             self.args.conv_time_CNN = 10
             self.args.conv_out = 7
             self.args.num_windows = (self.args.input_length // self.args.patch_size - 1) + (
@@ -200,6 +198,20 @@ class Exp ( object ) :
                             rnn_hidden_size = self.args.rnn_hidden_size, dropout_rate = self.args.dropout_rate, bidirectional = self.args.bidirectional,
                             fcn_hidden_size = self.args.fcn_hidden_size )
 
+        elif 'AIDGN' == self.args.model_name or 'AIDGN_best' == self.args.model_name:
+            self.args.feature_num = self.input_feature
+            self.args.outlayer = 'Linear'
+            self.args.nlayer = self.args.nlayer
+            self.args.fc_dropout = self.args.dropout
+            self.args.hop = self.args.hop
+            self.args.sequence_len = self.args.input_length  # sequence length (set explicitly)
+            self.args.hidden_dim = self.args.d_model
+            self.args.feature_fc_layer_dim = self.args.feature_num * 4
+            self.args.fc_layer_dim = self.args.hidden_dim * 4
+            self.args.kernal_size = self.args.AATE_dim
+            self.args.num_sensor = self.input_feature
+            model = AIDGN ( self.args )
+
         elif 'AIGCN' == self.args.model_name or 'AIGCN_best' == self.args.model_name:
             self.args.feature_num = self.input_feature
             self.args.outlayer = 'Linear'
@@ -214,25 +226,9 @@ class Exp ( object ) :
             self.args.num_sensor = self.input_feature
             model = AIGCN ( self.args )
 
-        elif 'DPDG' == self.args.model_name or 'DPDG_best' == self.args.model_name:
-            self.args.feature_num = self.input_feature
-            self.args.outlayer = 'Linear'
-            self.args.nlayer = self.args.nlayer
-            self.args.fc_dropout = self.args.dropout
-            self.args.hop = self.args.hop
-            self.args.sequence_len = self.args.input_length  # sequence length (set explicitly)
-            self.args.hidden_dim = self.args.d_model
-            self.args.feature_fc_layer_dim = self.args.feature_num * 4
-            self.args.fc_layer_dim = self.args.hidden_dim * 4
-            self.args.kernal_size = self.args.AATE_dim
-            self.args.num_sensor = self.input_feature
-            model = DPDG ( self.args )
 
-        elif self.args.model_name == 'CDSG':
-            model = CDSG(self.args, input_feature=self.input_feature)
 
-        elif self.args.model_name == 'SDAGCN':
-            model = SDAGCN(self.args, input_feature=self.input_feature)
+
 
         print ( "Parameter :", np.sum ( [para.numel () for para in model.parameters ()] ) )
 
@@ -272,14 +268,6 @@ class Exp ( object ) :
             X_train, index_train, y_train, X_vali, index_vali, y_vali, X_test, index_test, y_test, self.max_life = get_n_cmapss_data_ (
                 args = self.args,
                 name = args.Data_id_N_CMAPSS )  # X_train, y_train, X_vali, y_vali, X_test, y_test, self.max_life = get_n_cmapss_data_(args=self.args, name=args.Data_id_N_CMAPSS)
-
-        elif self.args.dataset_name == 'XJTU' :
-            X_train, y_train, X_vali, y_vali, X_test, y_test, self.max_life = get_xjtu_data_ (
-                pre_process_type = "Vibration", root_dir = './XJTU/XJTU-SY_Bearing_Datasets/35Hz12kN',
-                train_bearing_data_set = ["Bearing1_2", "Bearing1_3", "Bearing1_4", "Bearing1_5"],
-                test_bearing_data_set = ["Bearing1_1"], STFT_window_len = 256, STFT_overlap_num = 32,
-                window_length = args.input_length,
-                validation_rate = 0.1 )  # class Transpose(nn.Module):  #     def __init__(self):  #         super(Transpose, self).__init__()  #     def forward(self, x):  #         return x.transpose(-1, -2)  #  # self.input_linear = nn.Sequential(nn.Linear(32768, 240, dtype=torch.double),  #                                   nn.ReLU(),  #                                   Transpose(),  #                                   nn.BatchNorm1d(240, dtype=torch.double),  #                                   Transpose()  #                                   ).to(self.device)
         else :
             raise ValueError ( 'without corresponding dataset' )
 
@@ -443,13 +431,13 @@ class Exp ( object ) :
         if self.args.train :
             self.save_hparam ()
             # training process
-            print ( "start training without manual seed" )
-            # seed = self.args.seed
-            # torch.manual_seed ( seed )
-            # torch.cuda.manual_seed ( seed )
-            # torch.cuda.manual_seed_all ( seed )
-            # random.seed ( seed )
-            # np.random.seed ( seed )
+            print ( "start training" )
+            seed = self.args.seed
+            torch.manual_seed ( seed )
+            torch.cuda.manual_seed ( seed )
+            torch.cuda.manual_seed_all ( seed )
+            random.seed ( seed )
+            np.random.seed ( seed )
 
             # torch.backends.cudnn.deterministic = True
             # torch.backends.cudnn.benchmark = False
@@ -494,7 +482,9 @@ class Exp ( object ) :
         end_time = time()
         inference_time = end_time - start_time
 
-        print ( f"{self.args.dataset_name}- test performace using {self.args.model_name} model: RMSE : ", average_enc_loss, 'socre: ', overall_score )
+        print ( f"{self.args.dataset_name}: RMSE test performace of enc is: ", average_enc_loss, " of enc overall is: ",
+                average_enc_overall_loss, 'socre of'
+                                          'enc', overall_score )
         if self.args.dataset_name == 'CMAPSS' :
             dataset = self.args.Data_id_CMAPSS
             test_dataset = self.args.Data_id_CMAPSS_test

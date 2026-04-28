@@ -60,7 +60,7 @@ if __name__ == '__main__':
         description=__doc__)
     parser.add_argument('--task', default='normal', type=str, help='task options: [normal,PINN]')
     parser.add_argument('--model_name', default='AIGCN', type=str,
-                        help='[LeNet, LSTM, Transformer, Autoformer, PatchTST, AGCNN, CDSG, SDAGCN, Dual_Mixer, Transformer_domain,FCSTGNN, AIGCN, AIGCN_best]')
+                        help='[LeNet, LSTM, Transformer, Autoformer, PatchTST, AGCNN, CDSG, SDAGCN, Dual_Mixer, Transformer_domain,FCSTGNN, AIGCN]')
     # parser.add_argument('--model_name', default='FC_STGNN', type=str,
     #                     help='[ DPDG, ASTGCNN ,GRU_CM, HAGCN, HierCorrPool, STFA, RGCNU, STAGNN, LOGO, DVGTformer, STGNN, FC_STGNN --ST_Conv, RGCNU]')
 
@@ -76,7 +76,7 @@ if __name__ == '__main__':
     parser.add_argument('--loss_type', default='MSE', type=str, help='Loss type: [MSE, MAE ,QUAN]')
 
     # 1. load data parameter - common
-    parser.add_argument('--data_root', default='D:/Datasets/rul-datasets', type=str, help='dataset dir path ')
+    parser.add_argument('--data_root', default='/public1/Shaan/AIGCN_RUL/', type=str, help='D:/Datasets/rul-datasets or /public1/Shaan/RUL_framework/')
     parser.add_argument('--dataset_name', default='N_CMAPSS', type=str, help='[CMAPSS,N_CMAPSS,XJTU]')
     parser.add_argument('--Data_id_CMAPSS', default="", type=str, help='for CMAPSS')
     parser.add_argument('--Data_id_N_CMAPSS', default="DS01", type=str, help='for N_CMAPSS')
@@ -207,8 +207,9 @@ if __name__ == '__main__':
             exp = Exp_DA(args)
             exp.train(save_path)
         else:
-            args.Data_id_N_CMAPSS = 'DS03'
-            model_names = ['LeNet', 'LSTM', 'Transformer', 'Autoformer', 'PatchTST', 'AGCNN', 'Dual_Mixer', 'Transformer_domain','CDSG', 'FCSTGNN', 'AIGCN','SDAGCN']
+            args.Data_id_N_CMAPSS = 'DS01'
+            # model_names = ['LeNet', 'LSTM', 'Transformer', 'Autoformer', 'PatchTST', 'AGCNN', 'Dual_Mixer', 'Transformer_domain','FCSTGNN', 'CDSG', 'AIGCN']
+            model_names = ['AIGCN']
             for model_name in model_names :
                 args.model_name = model_name
                 hparams_class = get_configs(args.dataset_name, args.Data_id_CMAPSS)
@@ -217,12 +218,13 @@ if __name__ == '__main__':
                 model_configs = hparams_class.alg_hparams[args.model_name]
                 args.learning_rate = train_configs['learning_rate']
                 update_namespace(args, model_configs)
+
+                exp = Exp ( args )
+                exp.start ( )
                 try:
-                    exp = Exp ( args )
-                    exp.start ( )
-                except Exception as e:
-                    print(e)
-                    # print(model_name+" model's trained weights not found/match!")
+                    print("dd")
+                except:
+                    print(model_name+" model's trained weights not found/match!")
     elif args.task == 'PINN':
         args.learning_rate = 0.001
         exp = Exp_PINN(args)

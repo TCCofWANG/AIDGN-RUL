@@ -3,7 +3,6 @@ import os
 import warnings
 
 from Experiment.Experiment_PINN import Exp_PINN
-from Experiment.Experiment_DPDG import Exp_DPDG
 from configs.data_model_configs import update_namespace
 from configs.hparams import get_configs
 
@@ -60,8 +59,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__)
     parser.add_argument('--task', default='normal', type=str, help='task options: [normal,PINN]')
-    parser.add_argument('--model_name', default='AIGCN', type=str,
-                        help='[LeNet, LSTM, Transformer, Autoformer, PatchTST, AGCNN, PINN, CDSG, SDAGCN, Dual_Mixer, Transformer_domain,FCSTGNN, AIGCN]')
+    parser.add_argument('--model_name', default='AIDGN', type=str,
+                        help='[LeNet, LSTM, Transformer, Autoformer, PatchTST, AGCNN, PINN, CDSG, SDAGCN, Dual_Mixer, Transformer_domain,FCSTGNN, AIDGN]')
 
     parser.add_argument('--info', default='main test', type=str, help='extra information')
     parser.add_argument('--train', default=True, type=str2bool, help='Train or test')
@@ -76,9 +75,9 @@ if __name__ == '__main__':
     # 1. load data parameter - common
     parser.add_argument('--data_root', default=None, type=str, help='D:/Datasets/rul-datasets or /public1/Shaan/RUL_framework/')
     parser.add_argument('--dataset_name', default='CMAPSS', type=str, help='[CMAPSS,N_CMAPSS,XJTU]')
-    parser.add_argument ( '--Data_id_CMAPSS' , default = "FD001" , type = str , help = 'CMAPSS subset for train' )
-    parser.add_argument('--dataset_id' , default = "FD001" , type = str , help = 'CMAPSS subset for train' )
-    parser.add_argument ( '--Data_id_CMAPSS_test' , default = "FD001" , type = str , help = 'CMAPSS for test' )
+    parser.add_argument ( '--Data_id_CMAPSS' , default = "FD003" , type = str , help = 'CMAPSS subset for train' )
+    parser.add_argument('--dataset_id' , default = "FD003" , type = str , help = 'CMAPSS subset for train' )
+    parser.add_argument ( '--Data_id_CMAPSS_test' , default = "FD003" , type = str , help = 'CMAPSS for test' )
     parser.add_argument('--Data_id_N_CMAPSS', default="DS01", type=str, help='for N_CMAPSS')
     parser.add_argument('--input_length', default=50, type=int, help='input_lenth')
     parser.add_argument('--validation', default=0.1, type=float, help='validation') #diff from others

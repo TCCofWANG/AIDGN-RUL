@@ -21,7 +21,7 @@ def identify_and_remove_unique_columns(Dataframe):
     return unique_to_drop
 
 
-def Cmapss_train_vali_batch_generator(training_data, sequence_length=15,is_diff=False, epsilon= 1e-05):
+def Cmapss_train_vali_batch_generator(training_data, sequence_length=15,is_diff=False, epsilon= 1e-05, avg_max_OCC =125):
     """
     data generate for turbofan dataset
     Generator function for creating random batches of training-data
@@ -61,12 +61,12 @@ def Cmapss_train_vali_batch_generator(training_data, sequence_length=15,is_diff=
     for batch_index, index in enumerate(indexes):
         y_batch[batch_index] = training_data.iloc[index + sequence_length-1:index + sequence_length, -1].values
         x_batch[batch_index] = training_data.iloc[index:index + sequence_length, 2:-1].values
-        norm_index[batch_index] = training_data.iloc[index:index + sequence_length, 1:2].values * epsilon
+        norm_index[batch_index] = (training_data.iloc[index:index + sequence_length, 1:2].values /avg_max_OCC) * epsilon
 
     return x_batch, y_batch, norm_index
 
 
-def C_Cmapss_train_vali_batch_generator(training_data, sequence_length=15,is_diff=False, epsilon= 1e-05):
+def C_Cmapss_train_vali_batch_generator(training_data, sequence_length=15,is_diff=False, epsilon= 1e-05, avg_max_OCC =125):
     """
     data generate for turbofan dataset
     Generator function for creating random batches of training-data
@@ -106,12 +106,12 @@ def C_Cmapss_train_vali_batch_generator(training_data, sequence_length=15,is_dif
     for batch_index, index in enumerate(indexes):
         y_batch[batch_index] = training_data.iloc[index + sequence_length-1:index + sequence_length, -1].values
         x_batch[batch_index] = training_data.iloc[index:index + sequence_length, 2:-1].values
-        norm_index[batch_index] = training_data.iloc[index:index + sequence_length, 1:2].values * epsilon
+        norm_index[batch_index] = (training_data.iloc[index:index + sequence_length, 1:2].values /avg_max_OCC) * epsilon
 
     return x_batch, y_batch, norm_index
 
 
-def Cmapss_test_batch_generator(test_data, sequence_length=5,is_diff=False, epsilon= 1e-05):
+def Cmapss_test_batch_generator(test_data, sequence_length=15,is_diff=False, epsilon= 1e-05, avg_max_OCC =125):
     engine_ids = list(test_data["engine_id"].unique())
     if is_diff:
         sequence_length=sequence_length+1 #一次取多一个index
@@ -126,7 +126,7 @@ def Cmapss_test_batch_generator(test_data, sequence_length=5,is_diff=False, epsi
         #每个引擎id只取最末尾的一个wz，不切，相当于test_date就去wz的长度
         if test_of_one_id.shape[0] >= sequence_length:
             x_batch.append(test_of_one_id.iloc[-sequence_length:, 2:-1].values)
-            norm_index.append(test_of_one_id.iloc[-sequence_length:, 1:2].values * epsilon)
+            norm_index.append((test_of_one_id.iloc[-sequence_length:, 1:2].values/avg_max_OCC) * epsilon)
             y_batch.append(test_of_one_id.iloc[-1:, -1].values)
 
         else:
@@ -137,7 +137,7 @@ def Cmapss_test_batch_generator(test_data, sequence_length=5,is_diff=False, epsi
 
             x_batch.append(new_sg.iloc[:,2:-1].values)
             y_batch.append(new_sg.iloc[-1:, -1].values)
-            norm_index.append(new_sg.iloc[:, 1:2].values * epsilon)
+            norm_index.append((new_sg.iloc[:, 1:2].values/avg_max_OCC) * epsilon)
 
     return np.array(x_batch, dtype=np.float32), np.array(y_batch, dtype=np.float32), np.array(norm_index, dtype=np.float32),
 
@@ -164,156 +164,6 @@ def cal_diff(df, sensor_name, diff_periods=1):
     return sensor_diff
 
 
-# load and process training&validation or test data
-def hc_cmapss_data_train_vali_loader(data_path,
-                  Data_id,
-                  flag="train",
-                  sequence_length=40,
-                  MAXLIFE=120,
-                  is_difference=False,
-                  normalization="znorm",
-                  validation=0.1):
-    # --------------- read the train data, test data and labels for test ---------------
-
-    column_name = ['engine_id', 'cycle', 'setting1', 'setting2', 'setting3', 's1', 's2', 's3',
-                   's4', 's5', 's6', 's7', 's8', 's9', 's10', 's11', 's12', 's13', 's14',
-                   's15', 's16', 's17', 's18', 's19', 's20', 's21']
-
-    # 这里train test FD 的区别在于test缺少真实的寿命结果
-    train_FD = pd.read_table("{}/train_{}.txt".format(data_path, Data_id), header=None, delim_whitespace=True)
-    train_FD.columns = column_name
-
-    test_FD = pd.read_table("{}/test_{}.txt".format(data_path, Data_id), header=None, delim_whitespace=True)
-    test_FD.columns = column_name
-
-    # test对应的真实寿命标签
-    RUL_FD = pd.read_table("{}/RUL_{}.txt".format(data_path, Data_id), header=None, delim_whitespace=True)
-
-
-    # ---------------- difference ------------------------
-    # 默认不作这项操作
-    # if difference:
-    #     # 因为第一列和第二列表征id和cycle
-    #     diff_columns = train_FD.columns[2:]
-    #     for i in range(len(diff_columns)):
-    #         sensor_name_temp = diff_columns[i]
-    #         diff = cal_diff(train_FD, sensor_name=sensor_name_temp)
-    #         name = sensor_name_temp + '_diff'
-    #         train_FD[name] = diff
-    #     for i in range(len(diff_columns)):
-    #         sensor_name_temp = diff_columns[i]
-    #         diff = cal_diff(test_FD, sensor_name=sensor_name_temp)
-    #         name = sensor_name_temp + '_diff'
-    #         test_FD[name] = diff
-
-
-    # --------------- define the label for train and test ---------------
-    # piecewise linear RUL  for Training data
-    # MAXLIFE define after this timepoint, the work time is RUL
-
-    id = 'engine_id'
-    rul = []
-    healthy_labels = []
-    for _id in set(train_FD[id]):
-        trainFD_of_one_id = train_FD[train_FD[id] == _id]
-        cycle_list = trainFD_of_one_id['cycle'].tolist()
-        max_cycle = max(cycle_list)
-        # 限制最大寿命为MAXLIFE，也就是说cycle超出这个限制的，都被设置为MAXLIFE
-        knee_point = max_cycle - MAXLIFE
-        kink_RUL = []
-        healthy_label = []
-        for i in range(0, len(cycle_list)):
-            #
-            if i < knee_point:
-                kink_RUL.append(MAXLIFE)
-                healthy_label.append(0)
-            else:
-                tmp = max_cycle - i - 1
-                kink_RUL.append(tmp)
-                healthy_label.append(1)
-        rul.extend(kink_RUL)
-        healthy_labels.extend(healthy_label)
-    #根据MAXLIFE 重新设置数据集的RUL
-    train_FD["RUL"] = rul
-    train_FD["h_label"] = healthy_labels
-    # piecewise linear RUL  for Test data
-
-
-    # train 和 test的本质处理其实是一样的
-    id = 'engine_id'
-    rul = []
-    for _id_test in set(test_FD[id]):
-        true_rul = int(RUL_FD.iloc[_id_test - 1])
-        testFD_of_one_id = test_FD[test_FD[id] == _id_test]
-        cycle_list = testFD_of_one_id['cycle'].tolist()
-        max_cycle = max(cycle_list) + true_rul
-        knee_point = max_cycle - MAXLIFE
-        kink_RUL = []
-        for i in range(0, len(cycle_list)):
-            if i < knee_point:
-                kink_RUL.append(MAXLIFE)
-            else:
-                tmp = max_cycle - i - 1
-                kink_RUL.append(tmp)
-
-        rul.extend(kink_RUL)
-
-    test_FD["RUL"] = rul
-
-
-    # --------------- acoording to the labels of training dataset, delete redundant input sensors ---------------
-    # drop 掉没有用的feature 普遍因为是全是一个值没有考虑价值
-    col_to_drop = identify_and_remove_unique_columns(train_FD)
-    # 别人的code保留的传感器
-    # ["s2", "s3", "s4", "s7", "s8", "s9", "s11", "s12", "s13", "s14", "s15", "s17", "s20", "s21"]
-
-    # 强制去除固定的特征
-    col_to_drop = ['setting2','setting3','s1','s5','s6','s10','s16','s18','s19']
-    print(col_to_drop)
-    train_FD = train_FD.drop(col_to_drop, axis=1)
-    test_FD = test_FD.drop(col_to_drop, axis=1)
-
-
-    # ---------------- Normalization --------------------------------
-
-    if normalization == "znorm":
-        mean = train_FD.iloc[:, 2:-2].mean()
-        std  = train_FD.iloc[:, 2:-2].std()
-        std.replace(0, 1, inplace=True)
-
-        # training dataset
-        train_FD.iloc[:, 2:-2] = (train_FD.iloc[:, 2:-2] - mean) / std
-
-        # Testing dataset
-        test_FD.iloc[:, 2:-1] = (test_FD.iloc[:, 2:-1] - mean) / std
-    if normalization == "minmax":
-        min_ = train_FD.iloc[:, 2:-2].min()
-        max_ = train_FD.iloc[:, 2:-2].max()
-        dis  = max_ - min_
-        dis.replace(0, 1, inplace=True)
-        # 把0替换为1 是为了避免分母为0 待会出的时候报错
-        # training dataset
-        train_FD.iloc[:, 2:-2] = (train_FD.iloc[:, 2:-2] - min_) / dis
-
-        # Testing dataset
-        test_FD.iloc[:, 2:-1] = (test_FD.iloc[:, 2:-1] - min_) / dis
-
-
-    # ------------------- batch generator -------------------------------
-
-    if flag == "train":
-
-        data_x, data_y, index_x = Cmapss_train_vali_batch_generator(train_FD, sequence_length,is_diff=is_difference)
-        X_train, X_vali, y_train, y_vali = train_test_split(data_x, data_y, test_size=validation, random_state=42)
-        print("the shape of X_train is:", X_train.shape)
-        print("the shape of y_train is:", y_train.shape)
-        return X_train, y_train, X_vali, y_vali
-
-    else:
-        # process test_data
-        data_x, data_y, index_x, = Cmapss_test_batch_generator(test_FD, sequence_length,is_diff=is_difference)
-
-        return data_x, data_y, index_x
 
 def normalize_min_max(train_FD):
     min_ = train_FD.iloc[:, 2:-1].min()
@@ -380,7 +230,7 @@ def get_global_input(train_values , sequence_length, type='mean'):
 
 
 
-def get_cmapss_data_(data_path, Data_id, test_Data_id, sequence_length=40, MAXLIFE=120, is_difference=False,validation=0.1, epsilon= 1e-05):
+def get_cmapss_data_(data_path, Data_id, test_Data_id, sequence_length=40, MAXLIFE=120, is_difference=False,validation=0.1, epsilon= 1e-03):
     # --------------- read the train data, test data and labels for test ---------------
 
     column_name = ['engine_id', 'cycle', 'setting1', 'setting2', 'setting3', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 's10', 's11', 's12', 's13', 's14',
@@ -389,7 +239,6 @@ def get_cmapss_data_(data_path, Data_id, test_Data_id, sequence_length=40, MAXLI
     # 这里train test FD 的区别在于test缺少真实的寿命结果
     train_FD = pd.read_table("{}/train_{}.txt".format(data_path, Data_id), header=None, delim_whitespace=True)
     train_FD.columns = column_name
-
     test_FD = pd.read_table("{}/test_{}.txt".format(data_path, test_Data_id), header=None, delim_whitespace=True)
     test_FD.columns = column_name
 
@@ -399,11 +248,12 @@ def get_cmapss_data_(data_path, Data_id, test_Data_id, sequence_length=40, MAXLI
 
     id = 'engine_id'
     rul = []
-
+    total_cycles = []
     for _id in set(train_FD[id]):
         trainFD_of_one_id = train_FD[train_FD[id] == _id]
         cycle_list = trainFD_of_one_id['cycle'].tolist()
         max_cycle = max(cycle_list)
+        normalized_occ = (trainFD_of_one_id['cycle'] / max_cycle).tolist()
         # 限制最大寿命为MAXLIFE，也就是说cycle超出这个限制的，都被设置为MAXLIFE
         knee_point = max_cycle - MAXLIFE
         kink_RUL = []
@@ -418,10 +268,11 @@ def get_cmapss_data_(data_path, Data_id, test_Data_id, sequence_length=40, MAXLI
                 kink_RUL.append(tmp)
 
         rul.extend(kink_RUL)
+        total_cycles.append(max_cycle)
 
     #根据MAXLIFE 重新设置数据集的RUL
     train_FD["RUL"] = rul
-
+    avg_total_cycle_train = sum(total_cycles) / len(total_cycles)
     # piecewise linear RUL  for Test data
 
 
@@ -443,11 +294,11 @@ def get_cmapss_data_(data_path, Data_id, test_Data_id, sequence_length=40, MAXLI
                 kink_RUL.append(tmp)
 
         rul.extend(kink_RUL)
-
     test_FD["RUL"] = rul
+    # test_FD["OCC"] = test_OCC
 
 
-    # --------------- acoording to the labels of training dataset, delete redundant input sensors ---------------
+    # acoording to the labels of training dataset, delete redundant input sensors ---------------
     # 别人的code保留的传感器
     # ["s2", "s3", "s4", "s7", "s8", "s9", "s11", "s12", "s13", "s14", "s15", "s17", "s20", "s21"]
 
@@ -501,30 +352,20 @@ def get_cmapss_data_(data_path, Data_id, test_Data_id, sequence_length=40, MAXLI
     # ------------------- batch generator -------------------------------
     global_input = get_global_input(train_FD.values, sequence_length, 'concat')
 
-    data_x, data_y, index_x = Cmapss_train_vali_batch_generator(train_FD, sequence_length,is_diff=is_difference)
+    data_x, data_y, index_x = Cmapss_train_vali_batch_generator(train_FD, sequence_length,is_diff=is_difference, epsilon=epsilon, avg_max_OCC=avg_total_cycle_train)
     X_train, X_vali, y_train, y_vali, B_train, B_valid = train_test_split(data_x, data_y, index_x, test_size=validation, random_state=42)
     print("the shape of X_train is:", X_train.shape)
     print("the shape of y_train is:", y_train.shape)
     print("the shape of B_train is:", B_train.shape)
 
-    # basis_index = self.indexes[i]
-    # index_list = np.arange(basis_index,index+(self.sequence_len),1)
-    ## normalize the index
-    norm_index = train_normalized * epsilon
 
     # process test_data
-    data_x, data_y, index_x = Cmapss_test_batch_generator(test_FD, sequence_length,is_diff=is_difference)
+    data_x, data_y, index_x = Cmapss_test_batch_generator(test_FD, sequence_length,is_diff=is_difference, epsilon=epsilon, avg_max_OCC=avg_total_cycle_train)
 
     return X_train, y_train, B_train, X_vali, y_vali, B_valid, data_x, data_y, index_x, global_input
 
 
-def da_get_cmapss_data_(data_path,
-                   s_id,t_id,
-                  sequence_length=40,
-                  MAXLIFE=120,
-                  is_difference=False,
-                  normalization="znorm",
-                  validation=0.1):
+def da_get_cmapss_data_(data_path, s_id, t_id, sequence_length=40, MAXLIFE=120, is_difference=False,validation=0.1, epsilon= 1e-03):
     # --------------- read the train data, test data and labels for test ---------------
 
     column_name = ['engine_id', 'cycle', 'setting1', 'setting2', 'setting3', 's1', 's2', 's3',
@@ -546,7 +387,7 @@ def da_get_cmapss_data_(data_path,
 
     id = 'engine_id'
     s_rul = []
-
+    total_cycles = []
     for _id in set(s_train_FD[id]):
         trainFD_of_one_id = s_train_FD[s_train_FD[id] == _id]
         cycle_list = trainFD_of_one_id['cycle'].tolist()
@@ -565,9 +406,11 @@ def da_get_cmapss_data_(data_path,
                 kink_RUL.append(tmp)
 
         s_rul.extend(kink_RUL)
+        total_cycles.append(max_cycle)
 
     #根据MAXLIFE 重新设置数据集的RUL
     s_train_FD["RUL"] = s_rul
+    avg_total_cycle_train = sum(total_cycles) / len(total_cycles)
 
 
     id = 'engine_id'
@@ -596,8 +439,8 @@ def da_get_cmapss_data_(data_path,
     t_train_FD["RUL"] = t_rul
 
     # piecewise linear RUL  for Test data
-
     # train 和 test的本质处理其实是一样的
+
     id = 'engine_id'
     rul = []
     for _id_test in set(test_FD[id]):
@@ -675,8 +518,8 @@ def da_get_cmapss_data_(data_path,
     # TODO 由于我们不使用domain方法 source和target一致，所以使用取巧方法
     #t_train_FD = s_train_FD
 
-    s_data_x, s_data_y, s_data_idx = Cmapss_train_vali_batch_generator(s_train_FD, sequence_length,is_diff=is_difference)
-    t_data_x, t_data_y, t_data_idx = Cmapss_train_vali_batch_generator(t_train_FD, sequence_length,is_diff=is_difference)
+    s_data_x, s_data_y, s_data_idx = Cmapss_train_vali_batch_generator(s_train_FD, sequence_length,is_diff=is_difference, epsilon=epsilon, avg_max_OCC=avg_total_cycle_train)
+    t_data_x, t_data_y, t_data_idx = Cmapss_train_vali_batch_generator(t_train_FD, sequence_length,is_diff=is_difference, epsilon=epsilon, avg_max_OCC=avg_total_cycle_train)
 
     s_x_train, s_x_vali, s_i_train, s_i_vali, s_y_train, s_y_vali = train_test_split(s_data_x,s_data_idx, s_data_y, test_size=validation, random_state=42)
     t_x_train, t_x_vali, t_i_train,t_i_vali, t_y_train, t_y_vali = train_test_split(t_data_x,t_data_idx, t_data_y, test_size=validation, random_state=42)
@@ -684,7 +527,7 @@ def da_get_cmapss_data_(data_path,
     print("the shape of X_train is:", t_x_train.shape)
     print("the shape of y_train is:", t_y_train.shape)
 
-    data_x, data_y, data_idx = Cmapss_test_batch_generator(test_FD, sequence_length, is_diff=is_difference)
+    data_x, data_y, data_idx = Cmapss_test_batch_generator(test_FD, sequence_length, is_diff=is_difference, epsilon=epsilon, avg_max_OCC=avg_total_cycle_train)
 
 
     return s_x_train, t_x_train, s_i_train, t_i_train, s_x_vali, t_x_vali, s_i_vali, t_i_vali, s_y_vali, t_y_train, t_y_vali, data_x, data_y,data_idx
