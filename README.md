@@ -5,11 +5,11 @@
 </style>
 # Aging-Informed Dynamic Graph Networks for Aero-Engine RUL Estimation
 
-**AIDGN-RUL** (Aging-Informed Dynamic Graph Networks for RUL estimation), is a deep learning framework that formulates RUL prediction as an **aging-informed dynamic graph learning problem**. The model integrates degradation priors with evolving inter-sensor dependencies using temporal embeddings and graph neural networks, enabling accurate and robust remaining useful life prediction for aero-engine systems.
+**AIDGN-RUL** is a deep learning framework that formulates remaining useful life (RUL) prediction as an **aging-informed dynamic graph learning problem**. The model integrates degradation priors with evolving inter-sensor dependencies through temporal embeddings and graph neural networks for RUL prediction in aero-engine systems.
 
 For full methodological details, please refer to the paper:
 
-📄 **Paper:** [Link to paper]
+📄 **Paper:** https://ieeexplore.ieee.org/document/11563539 | doi: https://doi.org/10.1109/TII.2026.3694202
 
 <img src="./figures/AIGCN.png" height="350" alt="AIDGN-RUL Architecture" />
 <br>
@@ -19,7 +19,7 @@ For full methodological details, please refer to the paper:
 
 # Experimental Results
 
-AIDGN-RUL is evaluated against multiple state-of-the-art RUL prediction methods, including Dual-Mixer-RUL, DA-Transformer-RUL, FCSTGNN-RUL, and other competitive baselines. Across both benchmark datasets, the proposed model achieves **superior predictive accuracy and strong robustness**.
+AIDGN-RUL is evaluated against a range of state-of-the-art RUL prediction methods, including Dual-Mixer, DA-Transformer, and FCSTGNN, among other competitive baselines. On C-MAPSS it attains the best RMSE and Score across all four sub-datasets, and on N-CMAPSS it achieves the lowest average RMSE and Score; the reported standard deviations further indicate stable performance across repeated runs.
 
 ---
 
@@ -279,6 +279,7 @@ AIDGN-RUL is evaluated against multiple state-of-the-art RUL prediction methods,
 
   </tbody>
 </table>
+
 ---
 
 # Datasets
@@ -306,7 +307,7 @@ https://drive.google.com/drive/folders/1HtnDBGhMoAe53hl3t1XeCO9Z8IKd3-Q-
 1. Download the required dataset(s)
 2. Place the dataset folder inside the project root directory
 3. Ensure the directory structure matches the expected format used by the training scripts
-4. Update dataset paths in configuration files if needed
+4. Update dataset paths in the configuration files if needed
 
 ---
 
@@ -361,40 +362,23 @@ Train on **N-CMAPSS**:
 python N_CMAPSS_train.py
 ```
 
-[//]: # (---)
+## Citation
 
-[//]: # ()
-[//]: # ()
-[//]: # (# Citation)
+If you find this repository useful in your research, please cite:
 
-[//]: # ()
-[//]: # ()
-[//]: # (If you find this repository useful in your research, please cite:)
+```bibtex
+@ARTICLE{Abbas2026AIDGN-RUL,
+  author={Abbas, Zeeshan and Wang, Hao and Ali, Nasir and Song, Xiaobao and Cao, Wenming},
+  journal={IEEE Transactions on Industrial Informatics}, 
+  title={Aging-Informed Dynamic Graph Network for Aero-Engine RUL Prediction}, 
+  year={2026},
+  volume={},
+  number={},
+  pages={1-11},
+  keywords={Aging;Modeling;Image sensors;Construction;Matrices;Timing;Modules (abstract algebra);Robustness;Learning (artificial intelligence);Engines;Aero-engine degradation;aging-guided graph construction;dynamic graph neural networks;prognostics and health management;remaining useful life (RUL) prediction},
+  doi={10.1109/TII.2026.3694202}}
 
-[//]: # ()
-[//]: # ()
-[//]: # (```bibtex)
-
-[//]: # ()
-[//]: # (@article{AIGCN_RUL,)
-
-[//]: # ()
-[//]: # (  title={Aging-Informed Graph Convolutional Networks for Aero-Engine Health Prognosis},)
-
-[//]: # ()
-[//]: # (  author={Your Name},)
-
-[//]: # ()
-[//]: # (  journal={IEEE transactions on informatics},)
-
-[//]: # ()
-[//]: # (  year={2026})
-
-[//]: # ()
-[//]: # (})
-
-[//]: # ()
-[//]: # (```)
+```
 
 ---
 
@@ -414,12 +398,10 @@ Their work has contributed significantly to research in **prognostics and health
 
 # Contact
 
-For questions or collaboration inquiries, please open an issue in this repository or contact:
-
-[//]: # (**@mcmaster.ca**)
+For questions or collaboration inquiries, please open an issue in this repository or contact the maintainer at [https://github.com/ZeeshanAbbas5].
 
 ---
 
 # License
 
-Please specify your preferred license (e.g., MIT, Apache 2.0, GPL).
+[SPECIFY LICENSE — e.g., MIT, Apache 2.0, GPL-3.0]
